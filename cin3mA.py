@@ -10,6 +10,16 @@ intents.message_content = True
 # Define the command prefix for the bot
 bot = commands.Bot(command_prefix='c!', intents=intents)
 
+# Help command to display the bot's commands
+bot.remove_command('help')
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(title='Cin3mA Bot', description='Bot para o servidor New Lands', color=0x00ff00)
+    embed.add_field(name='c!status', value='Mostra o status do bot', inline=False)
+    embed.add_field(name='c!hello', value='Cumprimenta o usuário', inline=False)
+    embed.add_field(name='c!somar', value='Realiza a soma entre dois numeros', inline=False)    
+    await ctx.send(embed=embed)
+
 # Define the command to display the bot's status
 @bot.command()
 async def status(ctx):
@@ -23,6 +33,12 @@ async def hello(ctx):
 @bot.command()
 async def iago(ctx):
     await ctx.send('Iago gay')
+    
+@bot.command()
+async def bernie(ctx):
+    gif_url = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcno0eGFhbTF3MmFzdHdpanBleDdrbTEzNHA1NGJvODhlOTZ6djVteCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/h8sRbOtj55JACfGn8R/giphy.gif'
+    await ctx.send(gif_url)
+    
 
 
 # Command to sum two numbers
@@ -31,4 +47,4 @@ async def somar(ctx, num1: int, num2: int):
     await ctx.send(f'A soma de {num1} + {num2} é igual a {num1 + num2}')
     
 # TOKEN
-bot.run('MTMyODQ2MjAwNzUwMTk4Mzc1NQ.G6DFmm.p00eH5oOUqoBK525nBvq1HHyaN_runwr8-MjRQ')
+bot.run('MTMyODQ2MjAwNzUwMTk4Mzc1NQ.GAigTk.YDsW8_wyOIUSG2qjqIXdZC-OzUczqshpNbgrzc')
