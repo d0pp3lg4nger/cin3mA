@@ -47,4 +47,4 @@ async def somar(ctx, num1: int, num2: int):
     await ctx.send(f'A soma de {num1} + {num2} é igual a {num1 + num2}')
     
 # TOKEN
-bot.run('MTMyODQ2MjAwNzUwMTk4Mzc1NQ.GAigTk.YDsW8_wyOIUSG2qjqIXdZC-OzUczqshpNbgrzc')
+bot.run('TOKEN')
