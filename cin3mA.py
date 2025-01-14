@@ -2,6 +2,7 @@ import discord
 import asyncio
 import random
 import yt_dlp as youtube_dl
+import os
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -174,13 +175,13 @@ async def arrastao(ctx, member: discord.Member):
             if channel.name != '🛋aA Alta Ordem!😈':       
                 if member.voice is not None:
                     await member.move_to(channel)
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.1)
                     
         for channel in reversed(voice_channels):
             if channel.name != '🛋aA Alta Ordem!😈':    
                 if member.voice is not None:
                     await member.move_to(channel)
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.1)
         
         await member.move_to(member_channel)
     except discord.Forbidden:
@@ -200,4 +201,5 @@ async def somar(ctx, num1: int, num2: int):
     await ctx.send(f'A soma de {num1} + {num2} é igual a {num1 + num2}')
     
 # TOKEN
-bot.run('TOKEN')
+TOKEN = os.getenv("DISCORD_TOKEN")
+bot.run(TOKEN)

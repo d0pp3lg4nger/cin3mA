@@ -1,0 +1,1 @@
+worker: python cin3mA.py
