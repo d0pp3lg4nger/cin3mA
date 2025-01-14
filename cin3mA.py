@@ -4,6 +4,7 @@ import random
 import yt_dlp as youtube_dl
 import os
 from discord.ext import commands
+from dotenv import load_dotenv
 
 intents = discord.Intents.default()
 intents.presences = True
@@ -201,5 +202,6 @@ async def somar(ctx, num1: int, num2: int):
     await ctx.send(f'A soma de {num1} + {num2} é igual a {num1 + num2}')
     
 # TOKEN
-TOKEN = os.getenv("DISCORD_TOKEN")
+load_dotenv("token.env")
+TOKEN = os.getenv('DISCORD_TOKEN')
 bot.run(TOKEN)
