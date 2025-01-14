@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import random
 import yt_dlp as youtube_dl
 from discord.ext import commands
 
@@ -10,6 +11,8 @@ intents.typing = True
 intents.guilds = True
 intents.voice_states = True
 intents.message_content = True
+
+EXEMPT_USER_ID = 424574968504909825
 
 # YoutubeDL options
 ytdl_format_options = {
@@ -65,6 +68,7 @@ async def on_message(message):
     
     await bot.process_commands(message)
 
+
 # Help command to display the bot's commands
 bot.remove_command('help')
 @bot.command()
@@ -89,6 +93,11 @@ async def hello(ctx):
 async def iago(ctx):
     await ctx.send('Iago gay')
     
+# Generate a random number
+@bot.command()
+async def igor(ctx):
+    await ctx.send(f'Igor está {random.randint(0, 100)}% 🐒 hoje!')
+    
 @bot.command()
 async def bernie(ctx):
     gif_url = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcno0eGFhbTF3MmFzdHdpanBleDdrbTEzNHA1NGJvODhlOTZ6djVteCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/h8sRbOtj55JACfGn8R/giphy.gif'
@@ -107,13 +116,52 @@ async def mover(ctx, member: discord.Member, channel: discord.VoiceChannel):
     except discord.HTTPException:
         await ctx.send('Erro ao mover membro.')
         
+@bot.command()
+async def convocar(ctx, member: discord.Member):
+    if ctx.author.id == EXEMPT_USER_ID:
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send("Não tenho permissão para apagar mensagens.")
+            return
+        except discord.HTTPException:
+            await ctx.send("Erro ao tentar apagar a mensagem.")
+            return
+        
+        # Verify if the member is in a voice channel
+        if member.voice is None:
+            await ctx.send('#%@#&!$(#$!2193#!&#)')
+            return
+        
+        # Search for the voice channel
+        channel = discord.utils.get(ctx.guild.voice_channels, name='🛋aA Alta Ordem!😈')
+        if channel is None:
+            await ctx.send('Canal de voz não encontrado.')
+            return
+        
+        try:
+            # Move the member to the voice channel
+            await member.move_to(channel)
+        except discord.Forbidden:
+            await ctx.send('1')
+        except discord.HTTPException:
+            await ctx.send('2')
+
 # Command to troll a member
 @bot.command()
+@commands.cooldown(1, 120, commands.BucketType.user)  # Cooldown: 1 uso a cada 120 segundos por usuário
 async def arrastao(ctx, member: discord.Member):
+    
+    # Verify if the user is exempt from the cooldown
+    if ctx.author.id == EXEMPT_USER_ID:
+        # Reset the cooldown for the command
+        arrastao.reset_cooldown(ctx)
+    
     if member.voice is None:
         await ctx.send(f'{member.mention} não está em um canal de voz.')
         return
-
+       
+     
     # Get all the voice channels in the guild
     voice_channels = [channel for channel in ctx.guild.channels if isinstance(channel, discord.VoiceChannel)]
 
@@ -121,16 +169,18 @@ async def arrastao(ctx, member: discord.Member):
     member_channel = member.voice.channel
     
     try:
-        for _ in range(3):
-            for channel in voice_channels:
+        #for _ in range(3):
+        for channel in voice_channels:
+            if channel.name != '🛋aA Alta Ordem!😈':       
                 if member.voice is not None:
                     await member.move_to(channel)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.3)
                     
-            for channel in reversed(voice_channels):
+        for channel in reversed(voice_channels):
+            if channel.name != '🛋aA Alta Ordem!😈':    
                 if member.voice is not None:
                     await member.move_to(channel)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.3)
         
         await member.move_to(member_channel)
     except discord.Forbidden:
@@ -138,7 +188,11 @@ async def arrastao(ctx, member: discord.Member):
     except discord.HTTPException:
         await ctx.send('Erro ao mover membro.')
         
-
+# Handle cooldown errors
+@arrastao.error
+async def arrastao_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f'O comando está em cooldown! Tente novamente em {round(error.retry_after, 2)} segundos.')
 
 # Command to sum two numbers
 @bot.command()
