@@ -1,8 +1,9 @@
 import discord
 import asyncio
 import random
-import yt_dlp as youtube_dl
 import os
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyClientCredentials
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -16,60 +17,54 @@ intents.message_content = True
 
 EXEMPT_USER_ID = 424574968504909825
 
-# YoutubeDL options
-ytdl_format_options = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-}
-ffmpeg_options = {
-    'options': '-vn',
-}
-
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-
+# Spotify API
+load_dotenv("token.env")
+spotify = Spotify(auth_manager=SpotifyClientCredentials(
+    client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+    client_secret=os.getenv("SPOTIPY_CLIENT_SECRET")
+))
 
 # Define the command prefix for the bot
 bot = commands.Bot(command_prefix='c!', intents=intents)
 
-# Function to get the audio source from a youtube video
-def get_audio_source(url):
-    info = ytdl.extract_info(url, download=False)
-    return discord.FFmpegPCMAudio(info['url'], **ffmpeg_options)
-
-# Event to run when the bot is mentioned
+# Event to play a specific song when the bot is mentioned
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
-    
+
+    # Verify if the bot was mentioned
     if bot.user in message.mentions:
+        # Verify if the author is in a voice channel
         if message.author.voice:
             channel = message.author.voice.channel
             try:
+                # Connect to the voice channel
                 vc = await channel.connect()
-                
-                music_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                source = get_audio_source(music_url)
-                
-                vc.play(source, after=lambda e: print('Player error: %s' % e) if e else None)
-                
-                while vc.is_playing():
-                    await asyncio.sleep(1)
-                    
-                await vc.disconnect()
-            except discord.errors.ClientException:
-                await message.channel.send('Já estou em um canal de voz.')
-            except discord.errors.InvalidArgument:
-                await message.channel.send('Canal de voz invalido.')
-        else:
-            await message.channel.send('Olá imbogno!')
-    
-    await bot.process_commands(message)
 
+                # Load the audio file
+                audio_source = discord.FFmpegPCMAudio('intro.mp3')
+
+                # Play the audio file
+                if not vc.is_playing():
+                    vc.play(audio_source)
+
+                    # Wait until the audio file finishes playing
+                    while vc.is_playing():
+                        await asyncio.sleep(1)
+
+                # Disconnect from the voice channel
+                await vc.disconnect()
+            except discord.ClientException:
+                await message.channel.send('Já estou em um canal de voz.')
+            except discord.InvalidArgument:
+                await message.channel.send('Canal de voz inválido.')
+            except Exception as e:
+                await message.channel.send(f'Ocorreu um erro: {e}')
+        else:
+            await message.channel.send('Pilantra!')
+
+    await bot.process_commands(message)
 
 # Help command to display the bot's commands
 bot.remove_command('help')
@@ -78,7 +73,13 @@ async def help(ctx):
     embed = discord.Embed(title='Cin3mA Bot', description='Bot para o servidor New Lands', color=0x00ff00)
     embed.add_field(name='c!status', value='Mostra o status do bot', inline=False)
     embed.add_field(name='c!hello', value='Cumprimenta o usuário', inline=False)
-    embed.add_field(name='c!somar', value='Realiza a soma entre dois numeros', inline=False)    
+    embed.add_field(name='c!somar num num', value='Realiza a soma entre dois numeros', inline=False)    
+    embed.add_field(name='c!mover @membro', value='Move um membro para um canal de voz', inline=False)
+    embed.add_field(name='c!arrastao @membro', value='Bagunçar a vida de alguém', inline=False)
+    embed.add_field(name='c!bernometro @membro', value='Mostra a intenção de um membro', inline=False)
+    embed.add_field(name='c!iago', value='O que será que ele é?', inline=False)
+    embed.add_field(name='c!igor', value='O que será que ele é?', inline=False)
+    embed.add_field(name='c!bernie', value='O que será que ele é?', inline=False)
     await ctx.send(embed=embed)
 
 # Define the command to display the bot's status
@@ -196,6 +197,10 @@ async def arrastao_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f'O comando está em cooldown! Tente novamente em {round(error.retry_after, 2)} segundos.')
 
+@bot.command()
+async def bernometro(ctx, member: discord.Member):
+    await ctx.send(f'{member.mention} tem {random.randint(0, 100)}% de intenção.')
+    
 # Command to sum two numbers
 @bot.command()
 async def somar(ctx, num1: int, num2: int):
