@@ -1,7 +1,7 @@
 # Name: Cin3mA Bot
 # Description: Discord bot for the New Lands server
 # Author: Arthur Clemente Machado (d0pp3lg4nger)
-# Version: 1.1
+# Version: 1.2
 
 # Import the required libraries
 import discord
