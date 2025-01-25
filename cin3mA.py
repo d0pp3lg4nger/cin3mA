@@ -8,6 +8,7 @@ import discord
 import asyncio
 import random
 import os
+import time
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
 from discord.ext import commands
@@ -139,60 +140,73 @@ async def bernie(interaction: discord.Interaction):
 # Move a member to a voice channel
 @bot.tree.command(name='mover', description='Move um membro para um canal de voz')
 async def mover(interaction: discord.Interaction, member: discord.Member, channel: discord.VoiceChannel):
+    await interaction.response.defer()
     if member.voice is None:
-        await interaction.response.send_message(f'{member.mention} não está em um canal de voz.')
+        await interaction.followup.send(f'{member.mention} não está em um canal de voz.')
         return
     try:
         await member.move_to(channel)
+        await interaction.followup.send(f'{member.mention} foi movido para {channel.mention}.')
     except discord.Forbidden:
-        await interaction.response.send_message('Não tenho permissão para mover membros.')
+        await interaction.followup.send('Não tenho permissão para mover membros.')
     except discord.HTTPException:
-        await interaction.response.send_message('Erro ao mover membro.')
+        await interaction.followup.send('Erro ao mover membro.')
         
 @bot.tree.command(name='convocar', description='Convoca um membro para um lugar...')
 async def convocar(interaction: discord.Interaction, member: discord.Member):
-    if interaction.author.id is EXEMPT_USER_ID:
-        try:
-            # Remove the original message
-            await interaction.response.delete_original_message()
-        except discord.Forbidden:
-            await interaction.response.send_message("Erro ao tentar apagar a mensagem.")
-            return
-        except discord.HTTPException:
-            await interaction.response.send_message("Erro ao tentar apagar a mensagem.")
-            return
-        
-        # Verify if the member is in a voice channel
-        if member.voice is None:
-            await interaction.response.send_message(f'{member.mention} não está em um canal de voz.')
-            return
-        
-        # Search for the voice channel
-        channel = discord.utils.get(interaction.guild.channels, name='🛋aA Alta Ordem!😈')
-        if channel is None:
-            await interaction.response.send_message('Canal de voz não encontrado.')
-            return
-        
-        try:
-            # Move the member to the voice channel
-            await member.move_to(channel)
-        except discord.Forbidden:
-            await interaction.response.send_message('Não tenho permissão para mover membros.')
-        except discord.HTTPException:
-            await interaction.response.send_message('Erro ao mover membro.')
+    try:
+        await interaction.response.defer()
+        if interaction.user.id == EXEMPT_USER_ID:          
+            # Verify if the member is in a voice channel
+            if member.voice is None:
+                await interaction.followup.send(f'{member.mention} não está em um canal de voz.')
+                return
+            
+            # Search for the voice channel
+            channel = discord.utils.get(interaction.guild.channels, name='🛋aA Alta Ordem!😈')
+            if channel is None:
+                await interaction.followup.send('Canal de voz não encontrado.')
+                return
+            
+            try:
+                # Move the member to the voice channel
+                await member.move_to(channel)
+                await interaction.followup.send(f'{member.mention} foi convocado.')
+            except discord.Forbidden:
+                await interaction.followup.send('Não tenho permissão para mover membros.')
+            except discord.HTTPException:
+                await interaction.followup.send('Erro ao mover membro.')
+    except Exception as e:
+        await interaction.followup.send(f"Erro ao executar o comando: {e}")
+
+cooldowns = {}
 
 # Command to troll a member
 @bot.tree.command(name='arrastao', description='Bagunçar a vida de alguém')
 @commands.cooldown(1, 120, commands.BucketType.user)  # Cooldown: 1 uso a cada 120 segundos por usuário
 async def arrastao(interaction: discord.Interaction, member: discord.Member):
+    global cooldowns
     
-    # Verify if the user is exempt from the cooldown
-    if interaction.author.id is EXEMPT_USER_ID:
-        # Reset the cooldown for the command
-        arrastao.reset_cooldown(interaction)
+    cooldown_time = 120  # Cooldown time in seconds
+    current_time = time.time()  
+    user_id = interaction.user.id
+
+    exempt_id = EXEMPT_USER_ID == user_id
+
+    if not exempt_id:
+        if user_id in cooldowns and current_time - cooldowns[user_id] < cooldown_time:
+            remaining_time = cooldown_time - (current_time - cooldowns[user_id])
+            await interaction.response.send_message(
+                f'Espere {remaining_time:.2f} segundos antes de usar este comando novamente.', ephemeral=True
+            )
+            return
+    
+        cooldowns[user_id] = current_time
+    
+    await interaction.response.defer()
     
     if member.voice is None:
-        await interaction.response.send_message(f'{member.mention} não está em um canal de voz.')
+        await interaction.followup.send(f'{member.mention} não está em um canal de voz.')
         return
        
      
@@ -204,29 +218,33 @@ async def arrastao(interaction: discord.Interaction, member: discord.Member):
     
     try:
         #for _ in range(3):
+        tasks = []
         for channel in voice_channels:
             if channel.name != '🛋aA Alta Ordem!😈':       
                 if member.voice is not None:
-                    await member.move_to(channel)
-                    await asyncio.sleep(0.1)
+                    tasks.append(member.move_to(channel))
                     
         for channel in reversed(voice_channels):
             if channel.name != '🛋aA Alta Ordem!😈':    
                 if member.voice is not None:
-                    await member.move_to(channel)
-                    await asyncio.sleep(0.1)
+                    tasks.append(member.move_to(channel))
+
+        tasks.append(member.move_to(member_channel))
         
-        await member.move_to(member_channel)
+        for task in tasks:
+            await task
+            
+        await interaction.followup.send(f'{member.mention} foi arrastado.')
     except discord.Forbidden:
-        await interaction.response.send_message('Não tenho permissão para mover membros.')
+        await interaction.followup.send('Não tenho permissão para mover membros.')
     except discord.HTTPException:
-        await interaction.response.send_message('Erro ao mover membro.')
+        await interaction.followup.send('Erro ao mover membro.')
         
 # Handle cooldown errors
 @arrastao.error
 async def arrastao_error(interaction, error):
     if isinstance(error, commands.CommandOnCooldown):
-        await interaction.response.send_message(f'Espere {error.retry_after:.2f} segundos antes de usar este comando novamente.')
+        await interaction.followup.send(f'Espere {error.retry_after:.2f} segundos antes de usar este comando novamente.')
 
     
 @bot.command()
