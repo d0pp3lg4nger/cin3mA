@@ -116,7 +116,10 @@ async def iago(interaction: discord.Interaction):
     
 @bot.tree.command(name='bernometro', description='Mostra a intenção de um membro')
 async def bernometro(interaction: discord.Interaction, member: discord.Member):
-    await interaction.response.send_message(f'{member.mention} tem {random.randint(0, 100)}% de intenção.')
+    if member.id == 723954856368537630:
+        await interaction.response.send_message(f'{member.mention} tem 100% de intenção.')
+    else:
+        await interaction.response.send_message(f'{member.mention} tem {random.randint(0, 100)}% de intenção.')
     
 # Command to sum two numbers
 @bot.tree.command(name='somar', description='Realiza a soma entre dois números')
