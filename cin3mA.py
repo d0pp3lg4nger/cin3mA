@@ -9,6 +9,7 @@ import asyncio
 import random
 import os
 import time
+import datetime
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
 from discord.ext import commands
@@ -31,7 +32,7 @@ guild_id = discord.Object(id=GUILD_ID)
 class MyBot(commands.Bot):
     async def on_ready(self):
         print(f"{self.user} está online e pronto!")
-
+        asyncio.create_task(daily_iago())
         try:
             guild = discord.Object(id=GUILD_ID)
             synced = await self.tree.sync(guild=guild)
@@ -113,6 +114,21 @@ async def hello(interaction: discord.Interaction):
 @bot.tree.command(name='iago', description='O que será que ele é?')
 async def iago(interaction: discord.Interaction):   
     await interaction.response.send_message('Iago gay')
+    
+# Event to use the 'iago' command every day at 12:00 PM in the 'iago-gay' text channel
+@bot.event
+async def daily_iago():
+    await bot.wait_until_ready()
+    channel = discord.utils.get(bot.get_all_channels(), name='iago-gay')
+    
+    if not channel:
+        print('Canal não encontrado.')
+        return
+    while not bot.is_closed():
+        now = datetime.datetime.now()
+        if now.hour == 12 and now.minute == 0:
+            await channel.send('Iago gay')
+        await asyncio.sleep(60)
     
 @bot.tree.command(name='bernometro', description='Mostra a intenção de um membro')
 async def bernometro(interaction: discord.Interaction, member: discord.Member):
@@ -226,13 +242,16 @@ async def arrastao(interaction: discord.Interaction, member: discord.Member):
             if channel.name != '🛋aA Alta Ordem!😈':       
                 if member.voice is not None:
                     tasks.append(member.move_to(channel))
-                    
+                   
+        count = 0 
         for channel in reversed(voice_channels):
+            if count == 4:
+                tasks.append(member.move_to(member_channel))
+                break
             if channel.name != '🛋aA Alta Ordem!😈':    
                 if member.voice is not None:
                     tasks.append(member.move_to(channel))
-
-        tasks.append(member.move_to(member_channel))
+            count += 1
         
         for task in tasks:
             await task
